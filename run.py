@@ -1,9 +1,12 @@
 import os
-
-from flask import Flask, render_template
+import json
+from flask import Flask, render_template, request, flash
+if os.path.exists("env.py"):
+    import env
 
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
 
 @app.route("/")
 def index():
@@ -12,12 +15,30 @@ def index():
 
 @app.route("/about")
 def about():
-    return render_template("about.html")
+    data = []
+    with open("data/company.json", "r") as json.data:
+        data = json.load(json.data)
+    return render_template("about.html", page_title="About", company= data)
+#this renders the about page with data and html
 
+@app.route("/about/<member_name>")
+def about_member(member_name):
+    member = {}
+    with open("data/company.json", "r") as json_data:
+        data = json.load(json_data)
+        for obj in data:
+            if obj["url"] == member_name:
+                member = obj
+    return render_template('member.html', member = member)
+#this creates a link on the about page which then creates a new page with further data.
 
-@app.route("/contact")
-def about():
-    return render_template("contact.html")
+@app.route("/contact", methods=["GET", "POST"])
+def contact():
+    if request.method == "POST":
+        flash("Thanks {}, we have received your message!".format(
+            request.form.get("name")))
+    return render_template("contact.html", page_title="Contact")
+
 
 
 if __name__ == "__main__":
@@ -26,3 +47,4 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT","5000")),
         debug=True
     )
+
